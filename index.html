@@ -103,7 +103,6 @@
             height: 250px;
             border-radius: 12px;
             padding: 20px;
-            /* Tamaño de fuente reducido 5 puntos */
             font-size: 1rem;
             border: 2px solid #e2e8f0;
             resize: none;
@@ -302,7 +301,6 @@
             </div>
             
             <div class="button-group">
-                <!-- Botón único para Iniciar/Detener grabación -->
                 <button id="recordBtn" class="btn btn-primary">
                     <i class="fas fa-microphone"></i> Iniciar Grabación
                 </button>
@@ -319,11 +317,12 @@
                 <ul>
                     <li>Haz clic en "Habilitar Micrófono" para conceder permisos</li>
                     <li>Presiona "Iniciar Grabación" para comenzar a transcribir</li>
-                    <li>Para detener la grabación, vuelve a presionar el mismo botón (ahora "Detener Grabación")</li>
-                    <li>Para añadir signos de puntuación, simplemente dilos en voz alta (punto, coma, etc.)</li>
-                    <li>Se añadirá automáticamente un espacio después de cada punto</li>
+                    <li>Para detener la grabación, vuelve a presionar el mismo botón</li>
+                    <li>Tu texto se conserva entre sesiones de grabación</li>
+                    <li>Para añadir signos de puntuación, dilos en voz alta (punto, coma, etc.)</li>
+                    <li>Se añade automáticamente un espacio después de cada punto</li>
                     <li>No se usan mayúsculas automáticas a menos que haya un punto previo</li>
-                    <li>Usa "Copiar Texto" para copiar el texto transcrito al portapapeles</li>
+                    <li>Usa "Copiar Texto" para copiar todo el texto transcrito</li>
                     <li>Presiona "Limpiar Todo" para borrar el texto y comenzar de nuevo</li>
                 </ul>
             </div>
@@ -347,7 +346,7 @@
             // Variables globales
             let recognition = null;
             let isRecording = false;
-            let lastTranscript = '';
+            let currentInterim = ''; // Para almacenar texto provisional
             
             // Verificar compatibilidad del navegador
             const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -380,11 +379,16 @@
                         recordBtn.innerHTML = '<i class="fas fa-microphone"></i> Iniciar Grabación';
                         recordBtn.classList.remove('btn-danger');
                         recordBtn.classList.add('btn-primary');
+                        
+                        // Guardar el texto provisional como permanente
+                        if (currentInterim !== '') {
+                            transText.value += currentInterim;
+                            currentInterim = '';
+                        }
                     }
                 };
                 
                 recognition.onresult = function(event) {
-                    let interimTranscript = '';
                     let finalTranscript = '';
                     
                     for (let i = event.resultIndex; i < event.results.length; i++) {
@@ -409,12 +413,19 @@
                             
                             finalTranscript += processed;
                         } else {
-                            interimTranscript += transcript;
+                            // Texto provisional (no final)
+                            currentInterim = transcript;
                         }
                     }
                     
                     // Actualizar el área de texto
-                    transText.value = lastTranscript + finalTranscript + interimTranscript;
+                    if (finalTranscript !== '') {
+                        transText.value += finalTranscript;
+                    }
+                    
+                    // Mostrar texto provisional si existe
+                    const fullText = transText.value + (currentInterim !== '' ? currentInterim : '');
+                    transText.value = fullText;
                     transText.scrollTop = transText.scrollHeight;
                 };
                 
@@ -445,11 +456,17 @@
             // Botón de inicio/detener grabación
             recordBtn.addEventListener('click', function() {
                 if (!isRecording) {
+                    // Iniciar grabación
                     if (recognition) {
-                        lastTranscript = transText.value;
+                        // Guardar cualquier texto provisional pendiente
+                        if (currentInterim !== '') {
+                            transText.value += currentInterim;
+                            currentInterim = '';
+                        }
                         recognition.start();
                     }
                 } else {
+                    // Detener grabación
                     isRecording = false;
                     if (recognition) {
                         recognition.stop();
@@ -475,7 +492,7 @@
             // Limpiar todo
             clearBtn.addEventListener('click', function() {
                 transText.value = '';
-                lastTranscript = '';
+                currentInterim = '';
                 statusText.textContent = 'Listo para grabar';
                 
                 // Si está grabando, detener
