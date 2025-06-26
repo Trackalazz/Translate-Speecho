@@ -103,13 +103,15 @@
             height: 250px;
             border-radius: 12px;
             padding: 20px;
-            font-size: 1.1rem;
+            /* Tamaño de fuente reducido 5 puntos */
+            font-size: 1rem;
             border: 2px solid #e2e8f0;
             resize: none;
             outline: none;
             transition: border-color 0.3s;
             background-color: #f8fafc;
             color: #2d3748;
+            line-height: 1.6;
         }
 
         .transcription-box textarea:focus {
@@ -192,16 +194,6 @@
             box-shadow: 0 7px 14px rgba(66, 153, 225, 0.3);
         }
 
-        .btn-warning {
-            background: linear-gradient(to right, #ed8936, #dd6b20);
-            color: white;
-        }
-
-        .btn-warning:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 7px 14px rgba(237, 137, 54, 0.3);
-        }
-
         .btn-danger {
             background: linear-gradient(to right, #e53e3e, #c53030);
             color: white;
@@ -252,6 +244,7 @@
         .instructions li {
             margin-bottom: 8px;
             color: #718096;
+            font-size: 0.95rem;
         }
 
         @keyframes pulse {
@@ -309,14 +302,9 @@
             </div>
             
             <div class="button-group">
-                <button id="startBtn" class="btn btn-primary" disabled>
+                <!-- Botón único para Iniciar/Detener grabación -->
+                <button id="recordBtn" class="btn btn-primary">
                     <i class="fas fa-microphone"></i> Iniciar Grabación
-                </button>
-                <button id="pauseBtn" class="btn btn-warning" disabled>
-                    <i class="fas fa-pause"></i> Pausar Grabación
-                </button>
-                <button id="stopBtn" class="btn btn-danger" disabled>
-                    <i class="fas fa-stop"></i> Detener Grabación
                 </button>
                 <button id="copyBtn" class="btn btn-secondary">
                     <i class="fas fa-copy"></i> Copiar Texto
@@ -331,9 +319,10 @@
                 <ul>
                     <li>Haz clic en "Habilitar Micrófono" para conceder permisos</li>
                     <li>Presiona "Iniciar Grabación" para comenzar a transcribir</li>
-                    <li>Usa "Pausar Grabación" para pausar temporalmente</li>
-                    <li>Presiona "Detener Grabación" para finalizar la grabación</li>
+                    <li>Para detener la grabación, vuelve a presionar el mismo botón (ahora "Detener Grabación")</li>
                     <li>Para añadir signos de puntuación, simplemente dilos en voz alta (punto, coma, etc.)</li>
+                    <li>Se añadirá automáticamente un espacio después de cada punto</li>
+                    <li>No se usan mayúsculas automáticas a menos que haya un punto previo</li>
                     <li>Usa "Copiar Texto" para copiar el texto transcrito al portapapeles</li>
                     <li>Presiona "Limpiar Todo" para borrar el texto y comenzar de nuevo</li>
                 </ul>
@@ -349,9 +338,7 @@
         document.addEventListener('DOMContentLoaded', function() {
             // Elementos del DOM
             const enableMicBtn = document.getElementById('enableMic');
-            const startBtn = document.getElementById('startBtn');
-            const pauseBtn = document.getElementById('pauseBtn');
-            const stopBtn = document.getElementById('stopBtn');
+            const recordBtn = document.getElementById('recordBtn');
             const copyBtn = document.getElementById('copyBtn');
             const clearBtn = document.getElementById('clearBtn');
             const transText = document.getElementById('transcriptionText');
@@ -360,7 +347,7 @@
             // Variables globales
             let recognition = null;
             let isRecording = false;
-            let isPaused = false;
+            let lastTranscript = '';
             
             // Verificar compatibilidad del navegador
             const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -368,6 +355,7 @@
             if (!SpeechRecognition) {
                 alert('Lo siento, tu navegador no soporta la API de reconocimiento de voz. Por favor, utiliza Chrome o Edge.');
                 enableMicBtn.disabled = true;
+                recordBtn.disabled = true;
             } else {
                 // Configurar el reconocimiento de voz
                 recognition = new SpeechRecognition();
@@ -378,40 +366,55 @@
                 // Eventos de reconocimiento
                 recognition.onstart = function() {
                     isRecording = true;
-                    isPaused = false;
                     statusText.textContent = 'Grabando...';
-                    startBtn.disabled = true;
-                    pauseBtn.disabled = false;
-                    stopBtn.disabled = false;
+                    recordBtn.innerHTML = '<i class="fas fa-stop"></i> Detener Grabación';
+                    recordBtn.classList.remove('btn-primary');
+                    recordBtn.classList.add('btn-danger');
                 };
                 
                 recognition.onend = function() {
-                    if (isRecording && !isPaused) {
+                    if (isRecording) {
                         recognition.start();
                     } else {
-                        isRecording = false;
                         statusText.textContent = 'Detenido';
-                        startBtn.disabled = false;
-                        pauseBtn.disabled = true;
-                        stopBtn.disabled = true;
+                        recordBtn.innerHTML = '<i class="fas fa-microphone"></i> Iniciar Grabación';
+                        recordBtn.classList.remove('btn-danger');
+                        recordBtn.classList.add('btn-primary');
                     }
                 };
                 
                 recognition.onresult = function(event) {
-                    let finalTranscript = '';
                     let interimTranscript = '';
+                    let finalTranscript = '';
                     
                     for (let i = event.resultIndex; i < event.results.length; i++) {
                         const transcript = event.results[i][0].transcript;
                         if (event.results[i].isFinal) {
-                            finalTranscript += transcript;
+                            // Procesar texto final
+                            let processed = transcript;
+                            
+                            // 1. Añadir espacio después de cada punto
+                            processed = processed.replace(/\.(\S)/g, '. $1');
+                            
+                            // 2. No usar mayúsculas a menos que haya un punto previo
+                            // Convertir todo a minúsculas, excepto después de punto
+                            processed = processed.replace(/(?:^|[.!?]\s+)([a-z])/g, function(match) {
+                                return match.toUpperCase();
+                            });
+                            
+                            // Mantener la primera letra en mayúscula
+                            if (transText.value === '' && processed.length > 0) {
+                                processed = processed.charAt(0).toUpperCase() + processed.slice(1);
+                            }
+                            
+                            finalTranscript += processed;
                         } else {
                             interimTranscript += transcript;
                         }
                     }
                     
                     // Actualizar el área de texto
-                    transText.value += finalTranscript;
+                    transText.value = lastTranscript + finalTranscript + interimTranscript;
                     transText.scrollTop = transText.scrollHeight;
                 };
                 
@@ -419,9 +422,9 @@
                     console.error('Error en el reconocimiento: ', event.error);
                     statusText.textContent = 'Error: ' + event.error;
                     isRecording = false;
-                    startBtn.disabled = false;
-                    pauseBtn.disabled = true;
-                    stopBtn.disabled = true;
+                    recordBtn.innerHTML = '<i class="fas fa-microphone"></i> Iniciar Grabación';
+                    recordBtn.classList.remove('btn-danger');
+                    recordBtn.classList.add('btn-primary');
                 };
             }
             
@@ -430,7 +433,7 @@
                 navigator.mediaDevices.getUserMedia({ audio: true })
                     .then(function(stream) {
                         enableMicBtn.parentElement.style.display = 'none';
-                        startBtn.disabled = false;
+                        recordBtn.disabled = false;
                         statusText.textContent = 'Listo para grabar';
                     })
                     .catch(function(err) {
@@ -439,40 +442,18 @@
                     });
             });
             
-            // Iniciar grabación
-            startBtn.addEventListener('click', function() {
-                if (recognition && !isRecording) {
-                    recognition.start();
-                }
-            });
-            
-            // Pausar grabación
-            pauseBtn.addEventListener('click', function() {
-                if (recognition && isRecording) {
-                    if (!isPaused) {
-                        recognition.stop();
-                        isPaused = true;
-                        statusText.textContent = 'Pausado';
-                        pauseBtn.innerHTML = '<i class="fas fa-play"></i> Reanudar Grabación';
-                    } else {
+            // Botón de inicio/detener grabación
+            recordBtn.addEventListener('click', function() {
+                if (!isRecording) {
+                    if (recognition) {
+                        lastTranscript = transText.value;
                         recognition.start();
-                        isPaused = false;
-                        pauseBtn.innerHTML = '<i class="fas fa-pause"></i> Pausar Grabación';
                     }
-                }
-            });
-            
-            // Detener grabación
-            stopBtn.addEventListener('click', function() {
-                if (recognition && isRecording) {
-                    recognition.stop();
+                } else {
                     isRecording = false;
-                    isPaused = false;
-                    statusText.textContent = 'Detenido';
-                    startBtn.disabled = false;
-                    pauseBtn.disabled = true;
-                    stopBtn.disabled = true;
-                    pauseBtn.innerHTML = '<i class="fas fa-pause"></i> Pausar Grabación';
+                    if (recognition) {
+                        recognition.stop();
+                    }
                 }
             });
             
@@ -494,16 +475,18 @@
             // Limpiar todo
             clearBtn.addEventListener('click', function() {
                 transText.value = '';
+                lastTranscript = '';
                 statusText.textContent = 'Listo para grabar';
                 
                 // Si está grabando, detener
                 if (isRecording) {
-                    recognition.stop();
                     isRecording = false;
-                    startBtn.disabled = false;
-                    pauseBtn.disabled = true;
-                    stopBtn.disabled = true;
-                    pauseBtn.innerHTML = '<i class="fas fa-pause"></i> Pausar Grabación';
+                    if (recognition) {
+                        recognition.stop();
+                    }
+                    recordBtn.innerHTML = '<i class="fas fa-microphone"></i> Iniciar Grabación';
+                    recordBtn.classList.remove('btn-danger');
+                    recordBtn.classList.add('btn-primary');
                 }
             });
         });
