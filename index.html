@@ -3,519 +3,510 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Transcripción de Audio en Tiempo Real</title>
+    <title>Transcripción de Audio a Texto</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
-        
-        :root {
-            --primary: #4361ee;
-            --primary-dark: #3a0ca3;
-            --secondary: #4cc9f0;
-            --accent: #f72585;
-            --light: #f8f9fa;
-            --dark: #212529;
-            --darker: #121212;
-            --success: #4ade80;
-            --danger: #f87171;
-            --warning: #fbbf24;
-            --border-radius: 16px;
-            --box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
-            --transition: all 0.3s ease;
-        }
-        
+
         body {
-            background: linear-gradient(135deg, var(--darker), #1a1a2e);
-            color: var(--light);
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
-            padding: 20px;
             display: flex;
             justify-content: center;
             align-items: center;
-            line-height: 1.6;
+            padding: 20px;
         }
-        
+
         .container {
             width: 100%;
-            max-width: 800px;
-            margin: 0 auto;
+            max-width: 900px;
+            background-color: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
         }
-        
-        header {
+
+        .header {
+            background: linear-gradient(to right, #5a67d8, #4c51bf);
+            color: white;
+            padding: 25px 30px;
             text-align: center;
-            margin-bottom: 30px;
-            padding: 20px;
-        }
-        
-        h1 {
-            font-size: 2.8rem;
-            margin-bottom: 10px;
-            background: linear-gradient(90deg, var(--secondary), var(--primary));
-            -webkit-background-clip: text;
-            background-clip: text;
-            -webkit-text-fill-color: transparent;
-            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-        }
-        
-        .app-description {
-            font-size: 1.2rem;
-            max-width: 600px;
-            margin: 0 auto 20px;
-            color: #cbd5e1;
-        }
-        
-        .app-card {
-            background: rgba(30, 30, 46, 0.7);
-            backdrop-filter: blur(12px);
-            border-radius: var(--border-radius);
-            box-shadow: var(--box-shadow);
-            padding: 30px;
-            margin-bottom: 30px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        
-        .controls {
-            display: flex;
-            justify-content: center;
-            gap: 20px;
-            margin-bottom: 30px;
-        }
-        
-        .btn {
-            padding: 16px 32px;
-            border-radius: 50px;
-            font-size: 1.1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: var(--transition);
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            border: none;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-        }
-        
-        .btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
-        }
-        
-        .btn:active {
-            transform: translateY(1px);
-        }
-        
-        .btn-primary {
-            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-            color: white;
-        }
-        
-        .btn-primary:hover {
-            background: linear-gradient(135deg, var(--primary-dark), var(--primary));
-        }
-        
-        .btn-success {
-            background: linear-gradient(135deg, var(--success), #16a34a);
-            color: white;
-        }
-        
-        .btn-danger {
-            background: linear-gradient(135deg, var(--danger), #dc2626);
-            color: white;
-        }
-        
-        .btn:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            transform: none;
-        }
-        
-        .transcription-container {
             position: relative;
-            margin-bottom: 30px;
         }
-        
-        #transcription {
-            width: 100%;
-            height: 300px;
-            padding: 25px;
-            border-radius: var(--border-radius);
-            font-size: 1.2rem;
-            resize: none;
-            background: rgba(18, 18, 32, 0.8);
-            color: var(--light);
-            border: 2px solid #3a3a5c;
-            transition: var(--transition);
-            line-height: 1.8;
+
+        .header h1 {
+            font-size: 2.2rem;
+            margin-bottom: 8px;
+            font-weight: 600;
         }
-        
-        #transcription:focus {
-            outline: none;
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.3);
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
         }
-        
-        .text-actions {
+
+        .content {
+            padding: 30px;
+        }
+
+        .permission-box {
+            background-color: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 25px;
+            border-left: 4px solid #4c51bf;
             display: flex;
-            justify-content: center;
-            gap: 20px;
-            margin-top: 20px;
-        }
-        
-        .btn-secondary {
-            background: linear-gradient(135deg, #7e7ef1, #5a5acf);
-            color: white;
-            padding: 14px 28px;
-        }
-        
-        .status {
-            display: flex;
-            justify-content: center;
             align-items: center;
             gap: 15px;
-            margin-top: 20px;
-            padding: 15px;
-            border-radius: var(--border-radius);
-            background: rgba(30, 30, 46, 0.5);
         }
-        
-        .status-indicator {
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            background: var(--danger);
-            animation: pulse 1.5s infinite;
+
+        .permission-box i {
+            color: #4c51bf;
+            font-size: 1.8rem;
         }
-        
-        .status-indicator.active {
-            background: var(--success);
+
+        .permission-box p {
+            flex: 1;
+            font-size: 1rem;
+            color: #4a5568;
         }
-        
-        @keyframes pulse {
-            0% { opacity: 0.6; }
-            50% { opacity: 1; }
-            100% { opacity: 0.6; }
-        }
-        
-        .notification {
-            position: fixed;
-            top: 30px;
-            left: 50%;
-            transform: translateX(-50%);
-            padding: 15px 30px;
-            border-radius: 50px;
-            background: var(--success);
+
+        .permission-box button {
+            background: linear-gradient(to right, #5a67d8, #4c51bf);
             color: white;
-            font-weight: 600;
-            box-shadow: var(--box-shadow);
-            opacity: 0;
-            transition: opacity 0.3s ease;
-            z-index: 1000;
-        }
-        
-        .notification.show {
-            opacity: 1;
-        }
-        
-        .browser-support {
-            background: rgba(251, 191, 36, 0.15);
-            border-left: 4px solid var(--warning);
-            padding: 15px;
+            border: none;
             border-radius: 8px;
-            margin-top: 25px;
-            font-size: 0.95rem;
+            padding: 10px 20px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
         }
-        
-        .language-selector {
-            display: flex;
-            justify-content: center;
+
+        .permission-box button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(90, 103, 216, 0.4);
+        }
+
+        .transcription-box {
             margin-bottom: 25px;
         }
-        
-        select {
-            background: rgba(18, 18, 32, 0.8);
-            color: var(--light);
-            border: 2px solid #3a3a5c;
-            border-radius: 50px;
-            padding: 12px 25px;
-            font-size: 1rem;
+
+        .transcription-box textarea {
             width: 100%;
-            max-width: 300px;
-            cursor: pointer;
-            transition: var(--transition);
-        }
-        
-        select:focus {
-            outline: none;
-            border-color: var(--primary);
-        }
-        
-        footer {
-            text-align: center;
-            margin-top: 40px;
-            color: rgba(255, 255, 255, 0.6);
-            font-size: 0.95rem;
+            height: 250px;
+            border-radius: 12px;
             padding: 20px;
+            font-size: 1.1rem;
+            border: 2px solid #e2e8f0;
+            resize: none;
+            outline: none;
+            transition: border-color 0.3s;
+            background-color: #f8fafc;
+            color: #2d3748;
         }
-        
+
+        .transcription-box textarea:focus {
+            border-color: #5a67d8;
+        }
+
+        .status-indicators {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: #f8f9fa;
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-size: 0.95rem;
+        }
+
+        .indicator i {
+            font-size: 1.2rem;
+        }
+
+        .recording-indicator .dot {
+            width: 12px;
+            height: 12px;
+            background-color: #e53e3e;
+            border-radius: 50%;
+            animation: pulse 1.5s infinite;
+        }
+
+        .button-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .btn {
+            flex: 1;
+            min-width: 150px;
+            padding: 15px 20px;
+            font-size: 1.05rem;
+            border-radius: 10px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn i {
+            font-size: 1.2rem;
+        }
+
+        .btn-primary {
+            background: linear-gradient(to right, #48bb78, #38a169);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 7px 14px rgba(72, 187, 120, 0.3);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(to right, #4299e1, #3182ce);
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 7px 14px rgba(66, 153, 225, 0.3);
+        }
+
+        .btn-warning {
+            background: linear-gradient(to right, #ed8936, #dd6b20);
+            color: white;
+        }
+
+        .btn-warning:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 7px 14px rgba(237, 137, 54, 0.3);
+        }
+
+        .btn-danger {
+            background: linear-gradient(to right, #e53e3e, #c53030);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 7px 14px rgba(229, 62, 62, 0.3);
+        }
+
+        .btn-dark {
+            background: linear-gradient(to right, #4a5568, #2d3748);
+            color: white;
+        }
+
+        .btn-dark:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 7px 14px rgba(74, 85, 104, 0.3);
+        }
+
+        .footer {
+            text-align: center;
+            padding: 20px;
+            background-color: #f8f9fa;
+            color: #718096;
+            font-size: 0.9rem;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        .instructions {
+            background-color: #fffaf0;
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 25px;
+            border-left: 4px solid #ed8936;
+        }
+
+        .instructions h3 {
+            color: #dd6b20;
+            margin-bottom: 12px;
+            font-size: 1.2rem;
+        }
+
+        .instructions ul {
+            padding-left: 20px;
+        }
+
+        .instructions li {
+            margin-bottom: 8px;
+            color: #718096;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        .status-text {
+            font-weight: 500;
+        }
+
         @media (max-width: 768px) {
-            h1 {
-                font-size: 2.2rem;
-            }
-            
-            .app-description {
-                font-size: 1rem;
-            }
-            
-            .controls, .text-actions {
+            .button-group {
                 flex-direction: column;
-                align-items: center;
             }
             
             .btn {
                 width: 100%;
-                max-width: 300px;
-                justify-content: center;
             }
             
-            #transcription {
-                height: 250px;
+            .header h1 {
+                font-size: 1.8rem;
             }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <header>
-            <h1><i class="fas fa-microphone-alt"></i> Transcripción de Voz</h1>
-            <p class="app-description">Convierte tu voz en texto en tiempo real. Ideal para tomar notas, dictar documentos y más.</p>
-        </header>
+        <div class="header">
+            <h1><i class="fas fa-microphone-alt"></i> Transcripción de Audio a Texto</h1>
+            <p>Convierte tu voz en texto en tiempo real</p>
+        </div>
         
-        <div class="app-card">
-            <div class="language-selector">
-                <select id="language-select">
-                    <option value="es-ES">Español (España)</option>
-                    <option value="es-MX">Español (México)</option>
-                    <option value="en-US">English (US)</option>
-                    <option value="en-GB">English (UK)</option>
-                    <option value="fr-FR">Français</option>
-                    <option value="de-DE">Deutsch</option>
-                    <option value="it-IT">Italiano</option>
-                    <option value="pt-BR">Português (Brasil)</option>
-                </select>
+        <div class="content">
+            <div class="permission-box">
+                <i class="fas fa-microphone-slash"></i>
+                <p>Para comenzar a transcribir, necesitamos acceso a tu micrófono. Por favor, haz clic en el botón para habilitar los permisos.</p>
+                <button id="enableMic"><i class="fas fa-microphone"></i> Habilitar Micrófono</button>
             </div>
             
-            <div class="controls">
-                <button id="start-btn" class="btn btn-primary">
-                    <i class="fas fa-microphone"></i> Iniciar Transcripción
-                </button>
-                <button id="stop-btn" class="btn btn-danger" disabled>
-                    <i class="fas fa-stop"></i> Detener
-                </button>
+            <div class="transcription-box">
+                <textarea id="transcriptionText" placeholder="Tu texto transcrito aparecerá aquí..."></textarea>
             </div>
             
-            <div class="transcription-container">
-                <textarea id="transcription" placeholder="Tu transcripción aparecerá aquí..."></textarea>
-                
-                <div class="text-actions">
-                    <button id="copy-btn" class="btn btn-secondary">
-                        <i class="fas fa-copy"></i> Copiar Texto
-                    </button>
-                    <button id="clear-btn" class="btn btn-secondary">
-                        <i class="fas fa-trash-alt"></i> Limpiar Todo
-                    </button>
+            <div class="status-indicators">
+                <div class="indicator">
+                    <i class="fas fa-circle recording-indicator"><span class="dot"></span></i>
+                    <span class="status-text">Estado: <span id="statusText">Inactivo</span></span>
+                </div>
+                <div class="indicator">
+                    <i class="fas fa-language"></i>
+                    <span class="status-text">Idioma: Español</span>
                 </div>
             </div>
             
-            <div class="status">
-                <div class="status-indicator" id="status-indicator"></div>
-                <span id="status-text">Transcripción detenida</span>
+            <div class="button-group">
+                <button id="startBtn" class="btn btn-primary" disabled>
+                    <i class="fas fa-microphone"></i> Iniciar Grabación
+                </button>
+                <button id="pauseBtn" class="btn btn-warning" disabled>
+                    <i class="fas fa-pause"></i> Pausar Grabación
+                </button>
+                <button id="stopBtn" class="btn btn-danger" disabled>
+                    <i class="fas fa-stop"></i> Detener Grabación
+                </button>
+                <button id="copyBtn" class="btn btn-secondary">
+                    <i class="fas fa-copy"></i> Copiar Texto
+                </button>
+                <button id="clearBtn" class="btn btn-dark">
+                    <i class="fas fa-trash-alt"></i> Limpiar Todo
+                </button>
             </div>
             
-            <div class="browser-support">
-                <i class="fas fa-info-circle"></i> Esta aplicación funciona mejor en navegadores Chrome, Edge y Safari. Asegúrate de permitir el acceso al micrófono cuando se solicite.
+            <div class="instructions">
+                <h3><i class="fas fa-info-circle"></i> Instrucciones de uso:</h3>
+                <ul>
+                    <li>Haz clic en "Habilitar Micrófono" para conceder permisos</li>
+                    <li>Presiona "Iniciar Grabación" para comenzar a transcribir</li>
+                    <li>Usa "Pausar Grabación" para pausar temporalmente</li>
+                    <li>Presiona "Detener Grabación" para finalizar la grabación</li>
+                    <li>Para añadir signos de puntuación, simplemente dilos en voz alta (punto, coma, etc.)</li>
+                    <li>Usa "Copiar Texto" para copiar el texto transcrito al portapapeles</li>
+                    <li>Presiona "Limpiar Todo" para borrar el texto y comenzar de nuevo</li>
+                </ul>
             </div>
         </div>
         
-        <footer>
-            <p>Transcripción de voz en tiempo real | Tecnología Web Speech API</p>
-        </footer>
+        <div class="footer">
+            <p>Transcripción de voz a texto con tecnología Web Speech API | Diseñado con ❤️</p>
+        </div>
     </div>
-    
-    <div class="notification" id="notification">Texto copiado al portapapeles!</div>
-    
+
     <script>
-        // Elementos del DOM
-        const startBtn = document.getElementById('start-btn');
-        const stopBtn = document.getElementById('stop-btn');
-        const copyBtn = document.getElementById('copy-btn');
-        const clearBtn = document.getElementById('clear-btn');
-        const transcriptionEl = document.getElementById('transcription');
-        const statusIndicator = document.getElementById('status-indicator');
-        const statusText = document.getElementById('status-text');
-        const notification = document.getElementById('notification');
-        const languageSelect = document.getElementById('language-select');
-        
-        // Variables de estado
-        let recognition;
-        let isTranscribing = false;
-        
-        // Comprobar soporte del navegador
-        function checkBrowserSupport() {
+        document.addEventListener('DOMContentLoaded', function() {
+            // Elementos del DOM
+            const enableMicBtn = document.getElementById('enableMic');
+            const startBtn = document.getElementById('startBtn');
+            const pauseBtn = document.getElementById('pauseBtn');
+            const stopBtn = document.getElementById('stopBtn');
+            const copyBtn = document.getElementById('copyBtn');
+            const clearBtn = document.getElementById('clearBtn');
+            const transText = document.getElementById('transcriptionText');
+            const statusText = document.getElementById('statusText');
+            
+            // Variables globales
+            let recognition = null;
+            let isRecording = false;
+            let isPaused = false;
+            
+            // Verificar compatibilidad del navegador
             const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
             
             if (!SpeechRecognition) {
-                statusText.textContent = "Tu navegador no soporta reconocimiento de voz. Prueba con Chrome, Edge o Safari.";
-                startBtn.disabled = true;
-                return false;
+                alert('Lo siento, tu navegador no soporta la API de reconocimiento de voz. Por favor, utiliza Chrome o Edge.');
+                enableMicBtn.disabled = true;
+            } else {
+                // Configurar el reconocimiento de voz
+                recognition = new SpeechRecognition();
+                recognition.continuous = true;
+                recognition.interimResults = true;
+                recognition.lang = 'es-ES';
+                
+                // Eventos de reconocimiento
+                recognition.onstart = function() {
+                    isRecording = true;
+                    isPaused = false;
+                    statusText.textContent = 'Grabando...';
+                    startBtn.disabled = true;
+                    pauseBtn.disabled = false;
+                    stopBtn.disabled = false;
+                };
+                
+                recognition.onend = function() {
+                    if (isRecording && !isPaused) {
+                        recognition.start();
+                    } else {
+                        isRecording = false;
+                        statusText.textContent = 'Detenido';
+                        startBtn.disabled = false;
+                        pauseBtn.disabled = true;
+                        stopBtn.disabled = true;
+                    }
+                };
+                
+                recognition.onresult = function(event) {
+                    let finalTranscript = '';
+                    let interimTranscript = '';
+                    
+                    for (let i = event.resultIndex; i < event.results.length; i++) {
+                        const transcript = event.results[i][0].transcript;
+                        if (event.results[i].isFinal) {
+                            finalTranscript += transcript;
+                        } else {
+                            interimTranscript += transcript;
+                        }
+                    }
+                    
+                    // Actualizar el área de texto
+                    transText.value += finalTranscript;
+                    transText.scrollTop = transText.scrollHeight;
+                };
+                
+                recognition.onerror = function(event) {
+                    console.error('Error en el reconocimiento: ', event.error);
+                    statusText.textContent = 'Error: ' + event.error;
+                    isRecording = false;
+                    startBtn.disabled = false;
+                    pauseBtn.disabled = true;
+                    stopBtn.disabled = true;
+                };
             }
             
-            return true;
-        }
-        
-        // Inicializar reconocimiento de voz
-        function initSpeechRecognition() {
-            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-            recognition = new SpeechRecognition();
+            // Habilitar micrófono
+            enableMicBtn.addEventListener('click', function() {
+                navigator.mediaDevices.getUserMedia({ audio: true })
+                    .then(function(stream) {
+                        enableMicBtn.parentElement.style.display = 'none';
+                        startBtn.disabled = false;
+                        statusText.textContent = 'Listo para grabar';
+                    })
+                    .catch(function(err) {
+                        console.error('Error al acceder al micrófono: ', err);
+                        alert('No se pudo acceder al micrófono. Por favor, asegúrate de que tienes un micrófono conectado y has otorgado los permisos necesarios.');
+                    });
+            });
             
-            recognition.continuous = true;
-            recognition.interimResults = true;
-            recognition.lang = languageSelect.value;
+            // Iniciar grabación
+            startBtn.addEventListener('click', function() {
+                if (recognition && !isRecording) {
+                    recognition.start();
+                }
+            });
             
-            recognition.onstart = () => {
-                isTranscribing = true;
-                startBtn.disabled = true;
-                stopBtn.disabled = false;
-                statusIndicator.classList.add('active');
-                statusText.textContent = "Escuchando... Habla ahora";
-            };
-            
-            recognition.onresult = (event) => {
-                let transcript = '';
-                
-                for (let i = event.resultIndex; i < event.results.length; i++) {
-                    if (event.results[i].isFinal) {
-                        transcript += event.results[i][0].transcript;
+            // Pausar grabación
+            pauseBtn.addEventListener('click', function() {
+                if (recognition && isRecording) {
+                    if (!isPaused) {
+                        recognition.stop();
+                        isPaused = true;
+                        statusText.textContent = 'Pausado';
+                        pauseBtn.innerHTML = '<i class="fas fa-play"></i> Reanudar Grabación';
                     } else {
-                        transcript += event.results[i][0].transcript;
+                        recognition.start();
+                        isPaused = false;
+                        pauseBtn.innerHTML = '<i class="fas fa-pause"></i> Pausar Grabación';
                     }
                 }
-                
-                transcriptionEl.value += transcript;
-                // Auto-scroll al final del texto
-                transcriptionEl.scrollTop = transcriptionEl.scrollHeight;
-            };
+            });
             
-            recognition.onerror = (event) => {
-                console.error('Error en reconocimiento de voz:', event.error);
-                statusText.textContent = `Error: ${event.error}`;
-                stopTranscription();
-            };
-            
-            recognition.onend = () => {
-                if (isTranscribing) {
-                    // Reconectarse si aún estamos transcribiendo
-                    recognition.start();
+            // Detener grabación
+            stopBtn.addEventListener('click', function() {
+                if (recognition && isRecording) {
+                    recognition.stop();
+                    isRecording = false;
+                    isPaused = false;
+                    statusText.textContent = 'Detenido';
+                    startBtn.disabled = false;
+                    pauseBtn.disabled = true;
+                    stopBtn.disabled = true;
+                    pauseBtn.innerHTML = '<i class="fas fa-pause"></i> Pausar Grabación';
                 }
-            };
-        }
-        
-        // Iniciar transcripción
-        function startTranscription() {
-            if (!checkBrowserSupport()) return;
+            });
             
-            // Solicitar permiso de micrófono
-            navigator.mediaDevices.getUserMedia({ audio: true })
-                .then(() => {
-                    initSpeechRecognition();
-                    recognition.start();
-                })
-                .catch(err => {
-                    console.error('Error al acceder al micrófono:', err);
-                    statusText.textContent = "Error: Permiso de micrófono denegado";
-                });
-        }
-        
-        // Detener transcripción
-        function stopTranscription() {
-            if (recognition) {
-                recognition.stop();
-            }
-            isTranscribing = false;
-            startBtn.disabled = false;
-            stopBtn.disabled = true;
-            statusIndicator.classList.remove('active');
-            statusText.textContent = "Transcripción detenida";
-        }
-        
-        // Copiar texto al portapapeles
-        function copyToClipboard() {
-            if (!transcriptionEl.value.trim()) {
-                showNotification("No hay texto para copiar", false);
-                return;
-            }
+            // Copiar texto
+            copyBtn.addEventListener('click', function() {
+                if (transText.value.trim() !== '') {
+                    transText.select();
+                    document.execCommand('copy');
+                    
+                    // Feedback visual
+                    const originalText = copyBtn.innerHTML;
+                    copyBtn.innerHTML = '<i class="fas fa-check"></i> ¡Copiado!';
+                    setTimeout(() => {
+                        copyBtn.innerHTML = originalText;
+                    }, 2000);
+                }
+            });
             
-            transcriptionEl.select();
-            document.execCommand('copy');
-            
-            // Para dispositivos móviles
-            navigator.clipboard.writeText(transcriptionEl.value)
-                .then(() => {
-                    showNotification("Texto copiado al portapapeles!");
-                })
-                .catch(err => {
-                    showNotification("Error al copiar el texto", false);
-                    console.error('Error al copiar:', err);
-                });
-        }
-        
-        // Limpiar todo
-        function clearTranscription() {
-            if (!transcriptionEl.value.trim()) {
-                showNotification("El área de texto ya está vacía", false);
-                return;
-            }
-            
-            transcriptionEl.value = "";
-            showNotification("Texto limpiado correctamente");
-        }
-        
-        // Mostrar notificación
-        function showNotification(message, isSuccess = true) {
-            notification.textContent = message;
-            notification.style.background = isSuccess ? 
-                "linear-gradient(135deg, var(--success), #16a34a)" : 
-                "linear-gradient(135deg, var(--danger), #dc2626)";
-            
-            notification.classList.add('show');
-            
-            setTimeout(() => {
-                notification.classList.remove('show');
-            }, 3000);
-        }
-        
-        // Event Listeners
-        startBtn.addEventListener('click', startTranscription);
-        stopBtn.addEventListener('click', stopTranscription);
-        copyBtn.addEventListener('click', copyToClipboard);
-        clearBtn.addEventListener('click', clearTranscription);
-        
-        languageSelect.addEventListener('change', () => {
-            if (recognition && isTranscribing) {
-                stopTranscription();
-                recognition.lang = languageSelect.value;
-                startTranscription();
-            } else if (recognition) {
-                recognition.lang = languageSelect.value;
-            }
+            // Limpiar todo
+            clearBtn.addEventListener('click', function() {
+                transText.value = '';
+                statusText.textContent = 'Listo para grabar';
+                
+                // Si está grabando, detener
+                if (isRecording) {
+                    recognition.stop();
+                    isRecording = false;
+                    startBtn.disabled = false;
+                    pauseBtn.disabled = true;
+                    stopBtn.disabled = true;
+                    pauseBtn.innerHTML = '<i class="fas fa-pause"></i> Pausar Grabación';
+                }
+            });
         });
-        
-        // Inicializar
-        checkBrowserSupport();
     </script>
 </body>
 </html>
